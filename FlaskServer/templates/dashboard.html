@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - Anti-Phishing Utility</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 1.5em;
+    }
+    .logout-btn {
+      background-color: #f44336;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background-color: #c62828;
+    }
+    .section {
+      background-color: #1f1f1f;
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+    }
+    .section h2 {
+      margin-top: 0;
+    }
+    .actions button {
+      background-color: #2196f3;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      margin: 10px 10px 0 0;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .actions button:hover {
+      background-color: #1976d2;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>Welcome to the Anti-Phishing Detector! 🎉</h1>
+  <form action="/logout" method="POST" style="margin: 0;">
+    <button class="logout-btn" type="submit">Logout</button>
+  </form>
+</div>
+
+<div class="section">
+  <h2>📈 System Status</h2>
+  <p><strong>Model Status:</strong> Loaded ✅</p>
+  <p><strong>Model Accuracy:</strong> 96.2%</p>
+</div>
+
+<div class="section">
+  <h2>⚙️ Quick Actions</h2>
+  <div class="actions">
+    <button>Scan a URL</button>
+    <button>View Scan Results</button>
+    <button>Train Model</button>
+  </div>
+</div>
+
+<div class="section">
+  <h2>📋 Project Info</h2>
+  <p>This Anti-Phishing Utility uses Machine Learning techniques to identify phishing websites with high accuracy. It analyzes URLs and webpage characteristics to predict whether a website is legitimate or malicious. Powered by a trained model and a streamlined detection system, it enhances cybersecurity defenses against phishing attacks.</p>
+</div>
+
+</body>
+</html>

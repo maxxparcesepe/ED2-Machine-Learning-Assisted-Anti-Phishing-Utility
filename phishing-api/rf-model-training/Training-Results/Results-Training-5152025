@@ -1,0 +1,58 @@
+Model Evaluation Summary 5/15/2025
+=========================
+
+Accuracy: 0.8939655509120025
+
+Classification Report:
+               precision    recall  f1-score   support
+
+         0.0       0.91      0.97      0.94    107013
+         1.0       0.76      0.52      0.62     21002
+
+    accuracy                           0.89    128015
+   macro avg       0.84      0.74      0.78    128015
+weighted avg       0.89      0.89      0.89    128015
+Overall Accuracy: 0.89396 (~89.4%)
+
+------------------------------
+Class-by-Class Performance:
+------------------------------
+
+Label 0.0 (Legitimate Sites):
+  - Precision: 0.91
+  - Recall:    0.97
+  - F1-Score:  0.94
+  - Support:   107,013 samples
+
+Label 1.0 (Phishing Sites):
+  - Precision: 0.76
+  - Recall:    0.52
+  - F1-Score:  0.62
+  - Support:   21,002 samples
+
+------------------------------
+Averaged Metrics:
+------------------------------
+
+Macro Average F1:     0.78
+Weighted Average F1:  0.89
+
+------------------------------
+Interpretation:
+------------------------------
+- The model performs very well on identifying legitimate sites (high precision and recall).
+- However, it only catches about 52% of actual phishing sites.
+- That means nearly half of phishing attempts are being missed.
+
+This is typical of imbalanced datasets, where the model sees more legitimate examples than phishing examples.
+
+------------------------------
+Recommendations:
+------------------------------
+
+1. Rebalance the training data (ensure phishing and legitimate samples are more equal).
+2. Use class_weight="balanced" in RandomForestClassifier to boost recall for minority class.
+3. Add more phishing-specific features (e.g., URL obfuscation patterns, HTML features).
+4. Evaluate feature importance to refine input features.
+5. Optionally experiment with models like Gradient Boosting or XGBoost.
+

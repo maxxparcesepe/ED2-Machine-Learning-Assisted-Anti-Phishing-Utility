@@ -1,0 +1,9 @@
+NumDots
+PathLevel
+UrlLength
+NumDash
+AtSymbol
+NumNumericChars
+IpAddress
+HttpsInHostname
+PathLength
