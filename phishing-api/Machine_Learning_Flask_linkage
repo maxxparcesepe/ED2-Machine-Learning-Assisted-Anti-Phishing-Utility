@@ -1,63 +1,80 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import joblib
-import numpy as np
-import logging
+import joblib, numpy as np, logging, math, json
 
-# Load model and feature order
-model = joblib.load("rf_model.pkl")
-with open("feature_order.txt") as f:
-    feature_order = [line.strip() for line in f.readlines()]
+def create_app(model_path="rf_model.pkl", feature_path="feature_order.txt"):
+    app = Flask(__name__)
+    CORS(app)  # TODO: restrict in prod
+    logging.basicConfig(level=logging.INFO)
 
-# Configure Flask
-app = Flask(__name__)
-CORS(app)
-logging.basicConfig(level=logging.INFO)
+    model = joblib.load(model_path)
+    with open(feature_path) as f:
+        feature_order = [line.strip() for line in f if line.strip()]
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    try:
-        data = request.get_json(force=True)
+    classes = list(model.classes_)  # e.g., [0,1] or ["legitimate","phishing"]
 
-        # Validate input
-        if not data or "features" not in data:
-            return jsonify({"error": "Missing 'features' key in JSON"}), 400
+    def sanitize(v):
+        try: v = float(v)
+        except: return 0.0
+        return 0.0 if (math.isnan(v) or math.isinf(v)) else v
 
-        input_features = data["features"]
+    @app.get("/health")
+    def health():
+        return jsonify({"status": "ok", "model_loaded": True, "n_features": len(feature_order)})
 
-        # If features are passed as a dictionary
-        if isinstance(input_features, dict):
-            feature_vector = [input_features.get(feat, 0) for feat in feature_order]
-        elif isinstance(input_features, list):
-            if len(input_features) != len(feature_order):
-                return jsonify({
-                    "error": f"Expected {len(feature_order)} features, got {len(input_features)}"
-                }), 400
-            feature_vector = input_features
-        else:
-            return jsonify({"error": "'features' must be a list or dict"}), 400
+    @app.get("/features")
+    def features():
+        return jsonify({"feature_order": feature_order})
 
-        # Reshape for prediction
-        X = np.array(feature_vector).reshape(1, -1)
+    @app.get("/model-info")
+    def model_info():
+        info = {"classes": classes, "n_features": len(feature_order)}
+        try:
+            with open("model_version.json") as mv: info.update(json.load(mv))
+        except: pass
+        return jsonify(info)
 
-        # Predict
-        prediction = model.predict(X)[0]
-        confidence = float(np.max(model.predict_proba(X)))
-        result = "phishing" if prediction == 0 else "legitimate"
+    @app.post("/predict")
+    def predict():
+        try:
+            data = request.get_json(force=True) or {}
+            feats = data.get("features")
+            if feats is None:
+                return jsonify({"error": {"code": "MISSING_FEATURES", "message": "Missing 'features' key"}}), 400
 
-        # Logging
-        logging.info(f"Input: {feature_vector}")
-        logging.info(f"Prediction: {result} ({confidence:.4f})")
+            if isinstance(feats, dict):
+                vec = [sanitize(feats.get(feat, 0.0)) for feat in feature_order]
+            elif isinstance(feats, list):
+                if len(feats) != len(feature_order):
+                    return jsonify({"error": {"code": "WRONG_LENGTH", "message": f"Expected {len(feature_order)} features"}}), 400
+                vec = [sanitize(v) for v in feats]
+            else:
+                return jsonify({"error": {"code": "BAD_TYPE", "message": "'features' must be dict or list"}}), 400
 
-        return jsonify({
-            "prediction": result,
-            "confidence": round(confidence, 4),
-            "features_checked": len(feature_vector)
-        })
+            X = np.array(vec, dtype=float).reshape(1, -1)
+            proba = model.predict_proba(X)[0]
+            pred_idx = int(np.argmax(proba))
+            pred_label = classes[pred_idx]
 
-    except Exception as e:
-        logging.error(f"Error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+            # Name your positive/negative consistently
+            out_label = str(pred_label)
+            phishing_prob = float(proba[classes.index("phishing")] if "phishing" in classes else proba[0])
+
+            logging.info(f"Prediction={out_label} phishing_prob={phishing_prob:.4f}")
+
+            return jsonify({
+                "prediction": out_label,
+                "winning_confidence": float(np.max(proba)),
+                "phishing_probability": phishing_prob,
+                "features_checked": len(vec)
+            })
+        except Exception as e:
+            logging.exception("Prediction error")
+            return jsonify({"error": {"code": "SERVER_ERROR", "message": str(e)}}), 500
+
+    return app
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    # For local dev only. Use gunicorn/waitress in prod.
+    app = create_app()
+    app.run(host="0.0.0.0", port=5000, debug=False)
